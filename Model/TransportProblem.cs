@@ -15,7 +15,14 @@ namespace TransportProblemApp.Model
 		}
 		public Answer GetSolution()
 		{
-			
+			Answer answer = new Answer();
+			FillTableWithTheMinimumElementMethod();
+			answer.BasePlan = GetPlan();
+			answer.FakeColumn = Table.FakeColumn;
+			answer.FakeRow = Table.FakeRow;
+			OptimaizePlan();
+			answer.OptimalPlan = GetPlan();
+			return answer;
 		}
 
 		private void FillTableWithTheMinimumElementMethod()
@@ -86,10 +93,103 @@ namespace TransportProblemApp.Model
 			}
 		}
 
-		private bool IsOptimal()
+		private double[][] GetPlan()
 		{
-
+			double[][] result = new double[Table.TariffMatrix.GetLength(0)][];
+			for (int i = 0; i < result.GetLength(0); i++)
+			{
+				result[i] = new double[Table.TariffMatrix[i].Length];
+				for (int j = 0; j < result[i].Length; j++)
+				{
+					if (double.IsNaN(Table.TariffMatrix[i][j].Value))
+						result[i][j] = 0;
+					else
+						result[i][j] = Table.TariffMatrix[i][j].Value;
+				}
+			}
+			return result;
 		}
+
+		private void OptimaizePlan()
+		{
+			double[] consumerPotencials = new double[Table.NeedsRow.Length];
+			double[] providerPotencials = new double[Table.StocksColumn.Length];
+			Queue<int> rowsQueue = new Queue<int>();
+			Queue<int> colsQueue = new Queue<int>();
+			List<int> visitedRows = new List<int>();
+			List<int> visitedCols = new List<int>();
+			bool rowsQueueIsCurrent = true;
+			rowsQueue.Enqueue(0);
+			int currentRow = -1;
+			int currentCol = -1;
+			int fuckingRow = -1;
+			int fuckingCol = -1;
+			bool fuckingCellWasFound = true;
+			while (fuckingCellWasFound)
+			{
+				fuckingCellWasFound = false;
+				while (rowsQueue.Count > 0 || colsQueue.Count > 0) // расставляем потенциалы
+				{
+					if (rowsQueueIsCurrent)
+					{
+						currentCol = -1;
+						currentRow = rowsQueue.Dequeue();
+						visitedRows.Add(currentRow);
+						if (rowsQueue.Count == 0)
+							rowsQueueIsCurrent = false;
+						for (int i = 0; i < Table.TariffMatrix[currentRow].Length; i++)
+						{
+							if (!visitedCols.Contains(i) && !double.IsNaN(Table.TariffMatrix[currentRow][i].Value)) // если в клетке не прочерк и тут еще не были
+							{
+								consumerPotencials[i] = Table.TariffMatrix[currentRow][i].Tariff - providerPotencials[currentRow];
+								colsQueue.Enqueue(i);
+							}
+						}
+					}
+					else
+					{
+						currentRow = -1;
+						currentCol = colsQueue.Dequeue();
+						visitedCols.Add(currentCol);
+						if (colsQueue.Count == 0)
+							rowsQueueIsCurrent = true;
+						for (int i = 0; i < Table.TariffMatrix.GetLength(0); i++)
+						{
+							if (!visitedRows.Contains(i) && !double.IsNaN(Table.TariffMatrix[i][currentCol].Value))// если в клетке не прочерк
+							{
+								providerPotencials[i] = Table.TariffMatrix[i][currentCol].Tariff - consumerPotencials[currentCol];
+								rowsQueue.Enqueue(i);
+							}
+						}
+					}
+				}
+
+				for (int i = 0; i < Table.StocksColumn.Length; i++)  // ищем ячейку, в которой не выполнено условие оптимальности плана
+				{
+					for (int j = 0; j < Table.NeedsRow.Length; j++)
+					{
+						if (double.IsNaN(Table.TariffMatrix[i][j].Value)) // в ячейке прочерк
+						{
+							if (providerPotencials[i] + consumerPotencials[j] > Table.TariffMatrix[i][j].Tariff)
+							{
+								fuckingRow = i;
+								fuckingCol = j;
+								fuckingCellWasFound = true;
+								break;
+							}
+						}
+					}
+					if (fuckingCellWasFound)
+						break;
+				}
+
+				if (fuckingCellWasFound)
+				{
+
+				}
+			}			
+		}
+
 
 		public static TransportTable CreateTransportTable(double[][] tariffMatrix, double[] stocks, double[] needs)
 		{

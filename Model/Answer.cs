@@ -6,9 +6,9 @@ namespace TransportProblemApp.Model
 {
 	public class Answer
 	{
-		double[][] BasePlan { get; set; }
-		double[][] OptimalPlan { get; set; }
-		int FakeRow { get; set; }
-		int FakeColumn { get; set; }
+		public double[][] BasePlan { get; set; }
+		public double[][] OptimalPlan { get; set; }
+		public int FakeRow { get; set; }
+		public int FakeColumn { get; set; }
 	}
 }
