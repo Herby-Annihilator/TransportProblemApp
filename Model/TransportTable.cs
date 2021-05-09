@@ -9,13 +9,13 @@ namespace TransportProblemApp.Model
 	/// По горизонтали - потребители
 	/// По вертикали - поставщики
 	/// </summary>
-	public class TransportTable
+	public class TransportTable : ICloneable
 	{
 		public Cell[][] TariffMatrix { get; set; }
 		public Cell[] NeedsRow { get; set; }
 		public Cell[] StocksColumn { get; set; }
-		public int FakeRow { get; set; } = -1;
-		public int FakeColumn { get; set; } = -1;
+		public int FakeRow { get; private set; } = -1;
+		public int FakeColumn { get; private set; } = -1;
 		internal TransportTable(Cell[][] tariff, Cell[] needsRow, Cell[] stocksColumn)
 		{
 			NeedsRow = (Cell[])needsRow.Clone();
@@ -31,18 +31,18 @@ namespace TransportProblemApp.Model
 				TariffMatrix[i] = new Cell[workingMatrix[i].Length];
 				for (int j = 0; j < TariffMatrix[i].Length; j++)
 				{
-					TariffMatrix[i][j] = new Cell(workingMatrix[i][j], Status.Base, 0);
+					TariffMatrix[i][j] = new Cell(workingMatrix[i][j], false, double.NaN);
 				}
 			}
 			NeedsRow = new Cell[workingNeeds.Length];
 			for (int i = 0; i < NeedsRow.Length; i++)
 			{
-				NeedsRow[i] = new Cell(0, Status.Base, workingNeeds[i]);
+				NeedsRow[i] = new Cell(0, false, workingNeeds[i]);
 			}
 			StocksColumn = new Cell[workingStocks.Length];
 			for (int i = 0; i < StocksColumn.Length; i++)
 			{
-				StocksColumn[i] = new Cell(0, Status.Base, workingStocks[i]);
+				StocksColumn[i] = new Cell(0, false, workingStocks[i]);
 			}
 		}
 
@@ -50,9 +50,9 @@ namespace TransportProblemApp.Model
 		{
 			for (int i = 0; i < TariffMatrix[rowIndex].Length; i++)
 			{
-				TariffMatrix[rowIndex][i].Status = Status.Fictitious;
+				TariffMatrix[rowIndex][i].IsFake = true;
 			}
-			StocksColumn[rowIndex].Status = Status.Fictitious;
+			StocksColumn[rowIndex].IsFake = true;
 			FakeRow = rowIndex;
 			FakeColumn = -1;
 		}
@@ -60,36 +60,35 @@ namespace TransportProblemApp.Model
 		{
 			for (int i = 0; i < TariffMatrix.GetLength(0); i++)
 			{
-				TariffMatrix[i][colIndex].Status = Status.Fictitious;
+				TariffMatrix[i][colIndex].IsFake = true;
 			}
-			NeedsRow[colIndex].Status = Status.Fictitious;
+			NeedsRow[colIndex].IsFake = true;
 			FakeColumn = colIndex;
 			FakeRow = -1;
+		}
+
+		public object Clone()
+		{
+			return new TransportTable(TariffMatrix.CloneMatrix(), (Cell[])NeedsRow.Clone(), (Cell[])StocksColumn.Clone());
 		}
 	}
 
 	public class Cell : ICloneable
 	{
 		public double Tariff { get; set; } = 0;
-		public Status Status { get; set; } = Status.Base;
+		public bool IsFake { get; set; } = false;
 		public double Value { get; set; } = double.NaN;
 
 		public object Clone()
 		{
-			return new Cell(Tariff, Status, Value);
+			return new Cell(Tariff, IsFake, Value);
 		}
 
-		public Cell(double tariff, Status status, double value)
+		public Cell(double tariff, bool isFake, double value)
 		{
 			Tariff = tariff;
-			Status = status;
+			IsFake = isFake;
 			Value = value;
 		}
-	}
-
-	public enum Status
-	{
-		Base,
-		Fictitious
 	}
 }

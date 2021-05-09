@@ -7,7 +7,86 @@ namespace TransportProblemApp.Model
 {
 	public class TransportProblem
 	{
-		public double[][] GetSolution()
+		private TransportTable _table;
+		public TransportTable Table { private get => _table; set => _table = (TransportTable)value.Clone(); }
+		public TransportProblem(TransportTable table)
+		{
+			Table = table;
+		}
+		public Answer GetSolution()
+		{
+			
+		}
+
+		private void FillTableWithTheMinimumElementMethod()
+		{
+			List<int> bannedRows = new List<int>();
+			List<int> bannedCols = new List<int>();
+			bool fakeRow = false, fakeCol = false;
+			if (Table.FakeRow > -1)
+			{
+				bannedRows.Add(Table.FakeRow);
+				fakeRow = true;
+			}				
+			else if (Table.FakeColumn > -1)
+			{
+				bannedCols.Add(Table.FakeColumn);
+				fakeCol = true;
+			}
+			int minTariffRowIndex = -1, minTariffColIndex = -1;
+			double minTariff;
+			while (bannedRows.Count < Table.StocksColumn.Length || bannedCols.Count < Table.NeedsRow.Length)
+			{
+				if (fakeRow && bannedRows.Count == Table.StocksColumn.Length)
+					bannedRows.Remove(Table.FakeRow);
+				else if (fakeCol && bannedCols.Count == Table.NeedsRow.Length)
+					bannedCols.Remove(Table.FakeColumn);
+				minTariff = double.MaxValue;
+				for (int i = 0; i < Table.StocksColumn.Length; i++) // по строкам
+				{
+					if (!bannedRows.Contains(i))
+					{
+						for (int j = 0; j < Table.NeedsRow.Length; j++)
+						{
+							if (!bannedCols.Contains(j))
+							{
+								if (Table.TariffMatrix[i][j].Tariff < minTariff)
+								{
+									minTariff = Table.TariffMatrix[i][j].Tariff;
+									minTariffColIndex = j;
+									minTariffRowIndex = i;
+								}
+							}
+						}
+					}
+
+					if (Table.NeedsRow[minTariffColIndex].Value < Table.StocksColumn[minTariffRowIndex].Value)
+					{
+						Table.TariffMatrix[minTariffRowIndex][minTariffColIndex].Value = Table.NeedsRow[minTariffColIndex].Value;
+						Table.StocksColumn[minTariffRowIndex].Value -= Table.NeedsRow[minTariffColIndex].Value;
+						Table.NeedsRow[minTariffColIndex].Value = 0;						
+					}
+					else if (Table.NeedsRow[minTariffColIndex].Value > Table.StocksColumn[minTariffRowIndex].Value)
+					{
+						Table.TariffMatrix[minTariffRowIndex][minTariffColIndex].Value = Table.StocksColumn[minTariffRowIndex].Value;
+						Table.NeedsRow[minTariffColIndex].Value -= Table.StocksColumn[minTariffRowIndex].Value;
+						Table.StocksColumn[minTariffRowIndex].Value = 0;
+					}
+					else //  когда одновременное равенство по наличию и по потребностям
+					{
+						Table.TariffMatrix[minTariffRowIndex][minTariffColIndex].Value = Table.StocksColumn[minTariffRowIndex].Value;
+						bannedRows.Add(minTariffRowIndex);  // то баним строку
+						continue; // и идем в начало цикла
+					}
+					if (Table.NeedsRow[minTariffColIndex].Value <= double.Epsilon)
+						bannedCols.Add(minTariffColIndex);
+					if (Table.StocksColumn[minTariffRowIndex].Value <= double.Epsilon)
+						bannedRows.Add(minTariffRowIndex);
+				}
+			}
+		}
+
+		private bool IsOptimal()
 		{
 
 		}
