@@ -185,12 +185,120 @@ namespace TransportProblemApp.Model
 
 				if (fuckingCellWasFound)
 				{
+					List<Vertex> path = FindPath(fuckingRow, fuckingCol);
 
 				}
 			}			
 		}
 
+		private List<Vertex> FindPath(int fuckingRow, int fuckingCol)
+		{
+			List<Vertex> path = new List<Vertex>();
+			int[] visitedRows = new int[Table.StocksColumn.Length];
+			int[] visitedCols = new int[Table.NeedsRow.Length];
+			Vertex currentVertex = new Vertex(fuckingRow, fuckingCol);
+			Vertex nextVertex = null;
+			List<Vertex> validRowVertexes;
+			List<Vertex> validColVertexes;
+			while(visitedCols[fuckingCol] < 2 || visitedRows[fuckingRow] < 2)
+			{
+				path.Add(currentVertex);
+				visitedCols[currentVertex.ColIndex]++;
+				visitedRows[currentVertex.RowIndex]++;
+				nextVertex = null;
+				if (visitedRows[currentVertex.RowIndex] < 2)
+				{
+					validRowVertexes = FindListOfValidVertexesInRow(currentVertex, visitedCols);
+					if (validRowVertexes.Count > 0)
+					{
+						nextVertex = FindClosestVertexToSpecifiedInRow(currentVertex, validRowVertexes);
+						currentVertex = nextVertex;
+					}	
+					else
+					{
+						visitedRows[currentVertex.RowIndex]++;
+						visitedCols[currentVertex.ColIndex]--;
+						// переход на предыдущий этап
+						path.RemoveAt(path.Count - 1);
+						currentVertex = path[path.Count - 1];
+						path.RemoveAt(path.Count - 1);
+						visitedRows[currentVertex.RowIndex]--;
+						visitedCols[currentVertex.ColIndex]--;
+					}
+				}
+				else if (visitedCols[currentVertex.ColIndex] < 2)
+				{
+					validColVertexes = FindListOfValidVertexesInCol(currentVertex, visitedRows);
+					if (validColVertexes.Count > 0)
+					{
+						nextVertex = FindClosestVertexToSpecifiedInCol(currentVertex, validColVertexes);
+						currentVertex = nextVertex;
+					}
+					else
+					{
+						visitedCols[currentVertex.ColIndex]++;
+						visitedRows[currentVertex.RowIndex]--;
+						// переход на предыдущий этап
+						path.RemoveAt(path.Count - 1);
+						currentVertex = path[path.Count - 1];
+						path.RemoveAt(path.Count - 1);
+						visitedRows[currentVertex.RowIndex]--;
+						visitedCols[currentVertex.ColIndex]--;
+					}
+				}
+			}
+			return path;
+		}
 
+		private List<Vertex> FindListOfValidVertexesInRow(Vertex currentVertex, int[] visitedCols)
+		{
+			List<Vertex> result = new List<Vertex>();
+			for (int i = 0; i < visitedCols.Length; i++)
+			{
+				if (!double.IsNaN(Table.TariffMatrix[currentVertex.RowIndex][i].Value) && visitedCols[i] < 2 && currentVertex.ColIndex != i)
+				{
+					result.Add(new Vertex(currentVertex.RowIndex, i));
+				}
+			}
+			return result;
+		}
+		private Vertex FindClosestVertexToSpecifiedInRow(Vertex currentVertex, List<Vertex> validVertexes)
+		{
+			Vertex closestVertex = validVertexes[0];
+			for (int i = 1; i < validVertexes.Count; i++)
+			{
+				if (Math.Abs(validVertexes[i].ColIndex - currentVertex.ColIndex) < Math.Abs(closestVertex.ColIndex - currentVertex.ColIndex)) // т.е. тут мы сравниваем расстояния между вершинами 
+				{
+					closestVertex = validVertexes[i];
+				}
+			}
+			return closestVertex;
+		}
+
+		private List<Vertex> FindListOfValidVertexesInCol(Vertex currentVertex, int[] visitedRows)
+		{
+			List<Vertex> result = new List<Vertex>();
+			for (int i = 0; i < visitedRows.Length; i++)
+			{
+				if (!double.IsNaN(Table.TariffMatrix[i][currentVertex.ColIndex].Value) && visitedRows[i] < 2 && currentVertex.RowIndex != i)
+				{
+					result.Add(new Vertex(i, currentVertex.ColIndex));
+				}
+			}
+			return result;
+		}
+		private Vertex FindClosestVertexToSpecifiedInCol(Vertex currentVertex, List<Vertex> validVertexes)
+		{
+			Vertex closestVertex = validVertexes[0];
+			for (int i = 1; i < validVertexes.Count; i++)
+			{
+				if (Math.Abs(validVertexes[i].RowIndex - currentVertex.RowIndex) < Math.Abs(closestVertex.RowIndex - currentVertex.RowIndex))
+				{
+					closestVertex = validVertexes[i];
+				}
+			}
+			return closestVertex;
+		}
 		public static TransportTable CreateTransportTable(double[][] tariffMatrix, double[] stocks, double[] needs)
 		{
 			CheckArguments(tariffMatrix, stocks, needs);
@@ -254,5 +362,18 @@ namespace TransportProblemApp.Model
 					throw new ArgumentException($"Различное число элементов в строках матрицы тарифов. Проблемная строка {i}");
 			}
 		}
+	}
+
+	public class Vertex
+	{
+		public Vertex(int rowIndex, int colIndex)
+		{
+			RowIndex = rowIndex;
+			ColIndex = colIndex;
+		}
+
+		public int RowIndex { get; set; }
+		public int ColIndex { get; set; }
+		
 	}
 }
