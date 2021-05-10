@@ -14,6 +14,33 @@ namespace TransportProblemApp
 		private int _providersCount;
 		private int _consumersCount;
 
+		public TransportProblemForm(TransportProblem problem)
+		{
+			int providersCount = problem.Table.StocksColumn.Length;
+			int consumersCount = problem.Table.NeedsRow.Length;
+			InitializeComponent();
+			_providersCount = providersCount;
+			_consumersCount = consumersCount;
+			CreateTariffTable(providersCount, consumersCount);
+			for (int i = 0; i < providersCount; i++)
+			{
+				for (int j = 0; j < consumersCount; j++)
+				{
+					tariffMatrix.Rows[i].Cells[j].Value = problem.Table.TariffMatrix[i][j].Tariff;
+				}
+			}
+			CreateStocksTable(providersCount);
+			for (int i = 0; i < providersCount; i++)
+			{
+				stocks.Rows[i].Cells[0].Value = problem.Table.StocksColumn[i].Value;
+			}
+			CreateNeedsTable(consumersCount);
+			for (int i = 0; i < consumersCount; i++)
+			{
+				needs.Rows[0].Cells[i].Value = problem.Table.NeedsRow[i].Value;
+			}
+		}
+
 		public TransportProblemForm(int providersCount, int consumersCount)
 		{
 			InitializeComponent();

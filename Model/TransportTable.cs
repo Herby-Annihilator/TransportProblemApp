@@ -69,7 +69,11 @@ namespace TransportProblemApp.Model
 
 		public object Clone()
 		{
-			return new TransportTable(TariffMatrix.CloneMatrix(), (Cell[])NeedsRow.Clone(), (Cell[])StocksColumn.Clone());
+			return new TransportTable(TariffMatrix.CloneMatrix(), (Cell[])NeedsRow.Clone(), (Cell[])StocksColumn.Clone())
+			{
+				FakeColumn = this.FakeColumn,
+				FakeRow = this.FakeRow
+			};
 		}
 	}
 

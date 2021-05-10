@@ -96,6 +96,8 @@ namespace TransportProblemApp
 			// 
 			this.optimalSolution.AllowUserToAddRows = false;
 			this.optimalSolution.AllowUserToDeleteRows = false;
+			this.optimalSolution.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
 			this.optimalSolution.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
 			this.optimalSolution.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.optimalSolution.Location = new System.Drawing.Point(3, 19);
@@ -229,6 +231,8 @@ namespace TransportProblemApp
 			// 
 			this.referenceSolution.AllowUserToAddRows = false;
 			this.referenceSolution.AllowUserToDeleteRows = false;
+			this.referenceSolution.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
 			this.referenceSolution.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
 			this.referenceSolution.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.referenceSolution.Location = new System.Drawing.Point(3, 19);

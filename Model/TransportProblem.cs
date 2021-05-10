@@ -8,7 +8,7 @@ namespace TransportProblemApp.Model
 	public class TransportProblem
 	{
 		private TransportTable _table;
-		public TransportTable Table { private get => _table; set => _table = (TransportTable)value.Clone(); }
+		public TransportTable Table { get => _table; set => _table = (TransportTable)value.Clone(); }
 		public TransportProblem(TransportTable table)
 		{
 			Table = table;
@@ -55,7 +55,7 @@ namespace TransportProblemApp.Model
 				{
 					if (!bannedRows.Contains(i))
 					{
-						for (int j = 0; j < Table.NeedsRow.Length; j++)
+						for (int j = 0; j < Table.NeedsRow.Length; j++)  // по столбцам
 						{
 							if (!bannedCols.Contains(j))
 							{
@@ -67,13 +67,15 @@ namespace TransportProblemApp.Model
 								}
 							}
 						}
-					}
-
+					}										
+				}
+				if (minTariff < double.MaxValue)
+				{
 					if (Table.NeedsRow[minTariffColIndex].Value < Table.StocksColumn[minTariffRowIndex].Value)
 					{
 						Table.TariffMatrix[minTariffRowIndex][minTariffColIndex].Value = Table.NeedsRow[minTariffColIndex].Value;
 						Table.StocksColumn[minTariffRowIndex].Value -= Table.NeedsRow[minTariffColIndex].Value;
-						Table.NeedsRow[minTariffColIndex].Value = 0;						
+						Table.NeedsRow[minTariffColIndex].Value = 0;
 					}
 					else if (Table.NeedsRow[minTariffColIndex].Value > Table.StocksColumn[minTariffRowIndex].Value)
 					{
@@ -84,8 +86,14 @@ namespace TransportProblemApp.Model
 					else //  когда одновременное равенство по наличию и по потребностям
 					{
 						Table.TariffMatrix[minTariffRowIndex][minTariffColIndex].Value = Table.StocksColumn[minTariffRowIndex].Value;
-						bannedRows.Add(minTariffRowIndex);  // то баним строку
-						continue; // и идем в начало цикла
+						Table.StocksColumn[minTariffRowIndex].Value = 0;
+						Table.NeedsRow[minTariffColIndex].Value = 0;
+						if (!(bannedCols.Count + 1 == Table.NeedsRow.Length && bannedRows.Count + 1 == Table.StocksColumn.Length)) // если это не последний этап
+						{
+							bannedRows.Add(minTariffRowIndex);  // то баним строку
+							continue; // и идем в начало цикла
+						}
+
 					}
 					if (Table.NeedsRow[minTariffColIndex].Value <= double.Epsilon)
 						bannedCols.Add(minTariffColIndex);
@@ -157,7 +165,7 @@ namespace TransportProblemApp.Model
 							rowsQueueIsCurrent = true;
 						for (int i = 0; i < Table.TariffMatrix.GetLength(0); i++)
 						{
-							if (!visitedRows.Contains(i) && !double.IsNaN(Table.TariffMatrix[i][currentCol].Value))// если в клетке не прочерк
+							if (!visitedRows.Contains(i) && !double.IsNaN(Table.TariffMatrix[i][currentCol].Value))// если в клетке не прочерк и в ней еще не были
 							{
 								providerPotencials[i] = Table.TariffMatrix[i][currentCol].Tariff - consumerPotencials[currentCol];
 								rowsQueue.Enqueue(i);
@@ -190,7 +198,6 @@ namespace TransportProblemApp.Model
 					List<Vertex> path = FindPath(fuckingRow, fuckingCol);
 					double min = FindMinValueInPath(path);
 					int sign;
-					bool zeroWas = false;
 					for (int i = 0; i < path.Count; i++)
 					{
 						if (i % 2 == 0)
@@ -202,15 +209,14 @@ namespace TransportProblemApp.Model
 							Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value = 0;
 						}
 						Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value += sign * min;
-						if (Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value <= double.Epsilon && Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value >= 0)
+						if (Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value <= double.Epsilon && Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value >= 0) // Если получился ноль
 						{
-							if (zeroWas)
+							if (i ==  path.Count - 1) // если это последний элемент пути, то нужно поставить прочерк, т.к. это выводит переменную из базиса
 							{
 								Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value = double.NaN;
 							}
 							else
 							{
-								zeroWas = true;
 								Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value = 0;
 							}
 						}
@@ -332,7 +338,7 @@ namespace TransportProblemApp.Model
 			double result = 0;
 			for (int i = 0; i < plan.GetLength(0); i++)
 			{
-				for (int j = 0; j < plan.GetLength(0); j++)
+				for (int j = 0; j < plan[i].Length; j++)
 				{
 					result += plan[i][j] * Table.TariffMatrix[i][j].Tariff;
 				}
@@ -373,6 +379,7 @@ namespace TransportProblemApp.Model
 					tariffMatrix[i].CopyTo(workingMatrix[i], 0);
 				}
 				workingStocks = new double[rowsCount + 1];
+				workingMatrix[rowsCount] = new double[colsCount];
 				stocks.CopyTo(workingStocks, 0);
 				workingStocks[rowsCount] = needsSum - stocksSum;
 			}
