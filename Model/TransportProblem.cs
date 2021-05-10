@@ -18,10 +18,12 @@ namespace TransportProblemApp.Model
 			Answer answer = new Answer();
 			FillTableWithTheMinimumElementMethod();
 			answer.BasePlan = GetPlan();
+			answer.BasePlanPrice = CalculatePrice(answer.BasePlan);
 			answer.FakeColumn = Table.FakeColumn;
 			answer.FakeRow = Table.FakeRow;
 			OptimaizePlan();
 			answer.OptimalPlan = GetPlan();
+			answer.OptimalPlanPrice = CalculatePrice(answer.OptimalPlan);
 			return answer;
 		}
 
@@ -186,7 +188,33 @@ namespace TransportProblemApp.Model
 				if (fuckingCellWasFound)
 				{
 					List<Vertex> path = FindPath(fuckingRow, fuckingCol);
-
+					double min = FindMinValueInPath(path);
+					int sign;
+					bool zeroWas = false;
+					for (int i = 0; i < path.Count; i++)
+					{
+						if (i % 2 == 0)
+							sign = 1;
+						else
+							sign = -1;
+						if (double.IsNaN(Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value))
+						{
+							Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value = 0;
+						}
+						Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value += sign * min;
+						if (Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value <= double.Epsilon && Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value >= 0)
+						{
+							if (zeroWas)
+							{
+								Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value = double.NaN;
+							}
+							else
+							{
+								zeroWas = true;
+								Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value = 0;
+							}
+						}
+					}
 				}
 			}			
 		}
@@ -299,6 +327,18 @@ namespace TransportProblemApp.Model
 			}
 			return closestVertex;
 		}
+		private double CalculatePrice(double[][] plan)
+		{
+			double result = 0;
+			for (int i = 0; i < plan.GetLength(0); i++)
+			{
+				for (int j = 0; j < plan.GetLength(0); j++)
+				{
+					result += plan[i][j] * Table.TariffMatrix[i][j].Tariff;
+				}
+			}
+			return result;
+		}
 		public static TransportTable CreateTransportTable(double[][] tariffMatrix, double[] stocks, double[] needs)
 		{
 			CheckArguments(tariffMatrix, stocks, needs);
@@ -348,6 +388,19 @@ namespace TransportProblemApp.Model
 			return table;
 		}
 
+		private double FindMinValueInPath(List<Vertex> path)
+		{
+			double min = Table.TariffMatrix[path[1].RowIndex][path[1].ColIndex].Value; // не 0
+			for (int i = 3; i < path.Count; i++)
+			{
+				if (Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value < min)
+				{
+					min = Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value;
+				}
+			}
+			return min;
+		}
+		
 		private static void CheckArguments(double[][] tariffMatrix, double[] stocks, double[] needs)
 		{
 			int rowsCount = tariffMatrix.GetLength(0);
