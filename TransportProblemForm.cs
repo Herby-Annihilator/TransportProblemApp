@@ -106,7 +106,23 @@ namespace TransportProblemApp
 				TransportProblem problem = new TransportProblem(TransportProblem.CreateTransportTable(tariffMatrixNumbers, stocksRow, needsRow));
 				Answer answer = problem.GetSolution();
 				CreateBasePlanTable(answer.BasePlan);
+				if (answer.FakeColumn > -1)
+				{
+					PaintTheColumnOfDataGrid(referenceSolution, answer.FakeColumn, Color.Red);
+				}
+				else if (answer.FakeRow > -1)
+				{
+					PaintTheRowOfDataGrid(referenceSolution, answer.FakeRow, Color.Red);
+				}
 				CreateOptimalPlanTable(answer.OptimalPlan);
+				if (answer.FakeColumn > -1)
+				{
+					PaintTheColumnOfDataGrid(optimalSolution, answer.FakeColumn, Color.Red);
+				}
+				else if (answer.FakeRow > -1)
+				{
+					PaintTheRowOfDataGrid(optimalSolution, answer.FakeRow, Color.Red);
+				}
 				labelBasePrice.Text = answer.BasePlanPrice.ToString();
 				labelOptimalPrice.Text = answer.OptimalPlanPrice.ToString();
 			}
@@ -152,6 +168,21 @@ namespace TransportProblemApp
 				{
 					optimalSolution.Rows[i].Cells[j].Value = optimalPlan[i][j];
 				}
+			}
+		}
+
+		private void PaintTheColumnOfDataGrid(DataGridView dataGridView, int colIndex, Color color)
+		{
+			for (int i = 0; i < dataGridView.Rows.Count; i++)
+			{
+				dataGridView.Rows[i].Cells[colIndex].Style.ForeColor = color;
+			}
+		}
+		private void PaintTheRowOfDataGrid(DataGridView dataGridView, int rowIndex, Color color)
+		{
+			for (int i = 0; i < dataGridView.Rows[rowIndex].Cells.Count; i++)
+			{
+				dataGridView.Rows[rowIndex].Cells[i].Style.ForeColor = color;
 			}
 		}
 	}
