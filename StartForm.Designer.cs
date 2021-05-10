@@ -29,27 +29,28 @@ namespace TransportProblemApp
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.textBox1 = new System.Windows.Forms.TextBox();
-			this.textBox2 = new System.Windows.Forms.TextBox();
+			this.textBoxProviders = new System.Windows.Forms.TextBox();
+			this.textBoxConsumers = new System.Windows.Forms.TextBox();
 			this.label1 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
 			this.buttonCreateProblem = new System.Windows.Forms.Button();
 			this.buttonFromFile = new System.Windows.Forms.Button();
+			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 			this.SuspendLayout();
 			// 
-			// textBox1
+			// textBoxProviders
 			// 
-			this.textBox1.Location = new System.Drawing.Point(12, 41);
-			this.textBox1.Name = "textBox1";
-			this.textBox1.Size = new System.Drawing.Size(124, 23);
-			this.textBox1.TabIndex = 0;
+			this.textBoxProviders.Location = new System.Drawing.Point(12, 41);
+			this.textBoxProviders.Name = "textBoxProviders";
+			this.textBoxProviders.Size = new System.Drawing.Size(124, 23);
+			this.textBoxProviders.TabIndex = 0;
 			// 
-			// textBox2
+			// textBoxConsumers
 			// 
-			this.textBox2.Location = new System.Drawing.Point(142, 41);
-			this.textBox2.Name = "textBox2";
-			this.textBox2.Size = new System.Drawing.Size(119, 23);
-			this.textBox2.TabIndex = 1;
+			this.textBoxConsumers.Location = new System.Drawing.Point(142, 41);
+			this.textBoxConsumers.Name = "textBoxConsumers";
+			this.textBoxConsumers.Size = new System.Drawing.Size(119, 23);
+			this.textBoxConsumers.TabIndex = 1;
 			// 
 			// label1
 			// 
@@ -89,21 +90,30 @@ namespace TransportProblemApp
 			this.buttonFromFile.UseVisualStyleBackColor = true;
 			this.buttonFromFile.Click += new System.EventHandler(this.buttonFromFile_Click);
 			// 
+			// statusStrip1
+			// 
+			this.statusStrip1.Location = new System.Drawing.Point(0, 100);
+			this.statusStrip1.Name = "statusStrip1";
+			this.statusStrip1.Size = new System.Drawing.Size(272, 22);
+			this.statusStrip1.TabIndex = 6;
+			this.statusStrip1.Text = "statusStrip1";
+			// 
 			// StartForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(272, 107);
+			this.ClientSize = new System.Drawing.Size(272, 122);
+			this.Controls.Add(this.statusStrip1);
 			this.Controls.Add(this.buttonFromFile);
 			this.Controls.Add(this.buttonCreateProblem);
 			this.Controls.Add(this.label2);
 			this.Controls.Add(this.label1);
-			this.Controls.Add(this.textBox2);
-			this.Controls.Add(this.textBox1);
+			this.Controls.Add(this.textBoxConsumers);
+			this.Controls.Add(this.textBoxProviders);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
 			this.MaximizeBox = false;
 			this.Name = "StartForm";
-			this.Text = "StartForm";
+			this.Text = "stat";
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -111,12 +121,13 @@ namespace TransportProblemApp
 
 		#endregion
 
-		private System.Windows.Forms.TextBox textBox1;
-		private System.Windows.Forms.TextBox textBox2;
+		private System.Windows.Forms.TextBox textBoxProviders;
+		private System.Windows.Forms.TextBox textBoxConsumers;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Button buttonCreateProblem;
 		private System.Windows.Forms.Button buttonFromFile;
+		private System.Windows.Forms.StatusStrip statusStrip1;
 	}
 }
 
