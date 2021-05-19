@@ -21,7 +21,7 @@ namespace TransportProblemApp.Model
 			answer.BasePlanPrice = CalculatePrice(answer.BasePlan);
 			answer.FakeColumn = Table.FakeColumn;
 			answer.FakeRow = Table.FakeRow;
-			OptimaizePlan();
+			//OptimaizePlan();
 			answer.OptimalPlan = GetPlan();
 			answer.OptimalPlanPrice = CalculatePrice(answer.OptimalPlan);
 			return answer;
@@ -91,6 +91,8 @@ namespace TransportProblemApp.Model
 						if (!(bannedCols.Count + 1 == Table.NeedsRow.Length && bannedRows.Count + 1 == Table.StocksColumn.Length)) // если это не последний этап
 						{
 							bannedRows.Add(minTariffRowIndex);  // то баним строку
+							bannedCols.Add(minTariffColIndex);
+							AddZeroToUnallocatedColumnInRow(minTariffRowIndex, bannedCols); // в этой строке нужно добавить ноль в незанятый столбец
 							continue; // и идем в начало цикла
 						}
 
@@ -101,6 +103,23 @@ namespace TransportProblemApp.Model
 						bannedRows.Add(minTariffRowIndex);
 				}
 			}
+		}
+
+		private void AddZeroToUnallocatedColumnInRow(int rowIndex, List<int> bannedCols)
+		{
+			for (int i = 0; i < Table.TariffMatrix[rowIndex].Length; i++)
+			{
+				if (!bannedCols.Contains(i))
+				{
+					if (double.IsNaN(Table.TariffMatrix[rowIndex][i].Value))
+					{
+						Table.TariffMatrix[rowIndex][i].Value = 0;
+						//bannedCols.Add(i);
+						break;
+					}
+				}				
+			}
+			return;
 		}
 
 		private double[][] GetPlan()
