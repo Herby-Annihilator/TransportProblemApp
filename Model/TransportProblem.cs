@@ -92,7 +92,7 @@ namespace TransportProblemApp.Model
 						{
 							bannedRows.Add(minTariffRowIndex);  // то баним строку
 							bannedCols.Add(minTariffColIndex);
-							AddZeroToUnallocatedColumnInRow(minTariffRowIndex, bannedCols); // в этой строке нужно добавить ноль в незанятый столбец
+							AddZeroToUnallocatedColumnInRow(minTariffRowIndex); // в этой строке нужно добавить ноль в незанятый столбец
 							continue; // и идем в начало цикла
 						}
 
@@ -105,21 +105,37 @@ namespace TransportProblemApp.Model
 			}
 		}
 
-		private void AddZeroToUnallocatedColumnInRow(int rowIndex, List<int> bannedCols)
+		private void AddZeroToUnallocatedColumnInRow(int rowIndex)
 		{
 			for (int i = 0; i < Table.TariffMatrix[rowIndex].Length; i++)
 			{
-				if (!bannedCols.Contains(i))
+				if (!IsThisColumnOccupied(i))
 				{
 					if (double.IsNaN(Table.TariffMatrix[rowIndex][i].Value))
 					{
 						Table.TariffMatrix[rowIndex][i].Value = 0;
-						//bannedCols.Add(i);
 						break;
 					}
 				}				
 			}
 			return;
+		}
+		/// <summary>
+		/// Указывает, является ли заданный столбец занятым
+		/// </summary>
+		/// <param name="colIndex"></param>
+		/// <returns></returns>
+		private bool IsThisColumnOccupied(int colIndex) // столбец занят
+		{
+			if (Table.NeedsRow[colIndex].Value == 0)  // если потребителю ничего не нужно
+			{
+				for (int i = 0; i < Table.StocksColumn.Length; i++) // и при этом
+				{
+					if (!double.IsNaN(Table.TariffMatrix[i][colIndex].Value)) // в столбце должна 
+						return true;  // находиться хотябы одна клетка плана
+				}
+			}
+			return false;
 		}
 
 		private double[][] GetPlan()
@@ -364,6 +380,58 @@ namespace TransportProblemApp.Model
 			}
 			return result;
 		}
+
+		private void DeleteFromTableUnusefulCells(Vertex startCyclePoint)
+		{
+
+		}
+
+		private void DeleteCell(int rowIndex, int colIndex, List<Vertex> unusefuls)
+		{
+			if (colIndex >= Table.NeedsRow.Length)
+			{
+				return;
+			}
+			if (rowIndex >= Table.StocksColumn.Length)
+			{
+				return;
+			}
+			DeleteCell(rowIndex, colIndex + 1, unusefuls);
+			DeleteCell(rowIndex + 1, colIndex, unusefuls);
+			if (!double.IsNaN(Table.TariffMatrix[rowIndex][colIndex].Value))
+			{
+				if (IsThisCellAloneInRow(rowIndex, colIndex) || IsThisCellAloneInColumn(rowIndex, colIndex))
+				{
+					unusefuls.Add(new Vertex(rowIndex, colIndex, Table.TariffMatrix[rowIndex][colIndex].Value));
+					Table.TariffMatrix[rowIndex][colIndex].Value = double.NaN;
+				}
+			}
+		}
+
+		private bool IsThisCellAloneInRow(int rowIndex, int colIndex)
+		{
+			int count = 0;
+			for (int i = 0; i < Table.NeedsRow.Length; i++)
+			{
+				if (i != colIndex)
+					if (!double.IsNaN(Table.TariffMatrix[rowIndex][i].Value))
+						count++;
+			}
+			return count == 0;
+		}
+
+		private bool IsThisCellAloneInColumn(int rowIndex, int colIndex)
+		{
+			int count = 0;
+			for (int i = 0; i < Table.StocksColumn.Length; i++)
+			{
+				if (i != rowIndex)
+					if (!double.IsNaN(Table.TariffMatrix[i][colIndex].Value))
+						count++;
+			}
+			return count == 0;
+		}
+
 		public static TransportTable CreateTransportTable(double[][] tariffMatrix, double[] stocks, double[] needs)
 		{
 			CheckArguments(tariffMatrix, stocks, needs);
@@ -445,14 +513,15 @@ namespace TransportProblemApp.Model
 
 	public class Vertex
 	{
-		public Vertex(int rowIndex, int colIndex)
+		public Vertex(int rowIndex, int colIndex, double value = double.NaN)
 		{
 			RowIndex = rowIndex;
 			ColIndex = colIndex;
+			Value = value;
 		}
 
 		public int RowIndex { get; set; }
 		public int ColIndex { get; set; }
-		
+		public double Value { get; set; }
 	}
 }
