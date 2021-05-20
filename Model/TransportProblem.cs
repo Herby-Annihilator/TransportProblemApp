@@ -21,7 +21,7 @@ namespace TransportProblemApp.Model
 			answer.BasePlanPrice = CalculatePrice(answer.BasePlan);
 			answer.FakeColumn = Table.FakeColumn;
 			answer.FakeRow = Table.FakeRow;
-			//OptimaizePlan();
+			OptimaizePlan();
 			answer.OptimalPlan = GetPlan();
 			answer.OptimalPlanPrice = CalculatePrice(answer.OptimalPlan);
 			return answer;
@@ -262,62 +262,64 @@ namespace TransportProblemApp.Model
 
 		private List<Vertex> FindPath(int fuckingRow, int fuckingCol)
 		{
+			var list = DeleteFromTableUnusefulCellsAndReturnTheList(new Vertex(fuckingRow, fuckingCol));
+
 			List<Vertex> path = new List<Vertex>();
 			int[] visitedRows = new int[Table.StocksColumn.Length];
 			int[] visitedCols = new int[Table.NeedsRow.Length];
 			Vertex currentVertex = new Vertex(fuckingRow, fuckingCol);
-			Vertex nextVertex = null;
 			List<Vertex> validRowVertexes;
 			List<Vertex> validColVertexes;
+
 			while(visitedCols[fuckingCol] < 2 || visitedRows[fuckingRow] < 2)
 			{
 				path.Add(currentVertex);
 				visitedCols[currentVertex.ColIndex]++;
 				visitedRows[currentVertex.RowIndex]++;
-				nextVertex = null;
 				if (visitedRows[currentVertex.RowIndex] < 2)
 				{
 					validRowVertexes = FindListOfValidVertexesInRow(currentVertex, visitedCols);
 					if (validRowVertexes.Count > 0)
 					{
-						nextVertex = FindClosestVertexToSpecifiedInRow(currentVertex, validRowVertexes);
-						currentVertex = nextVertex;
+						currentVertex = FindClosestVertexToSpecifiedInRow(currentVertex, validRowVertexes);
 					}	
-					else
-					{
-						visitedRows[currentVertex.RowIndex]++;
-						visitedCols[currentVertex.ColIndex]--;
-						// переход на предыдущий этап
-						path.RemoveAt(path.Count - 1);
-						currentVertex = path[path.Count - 1];
-						path.RemoveAt(path.Count - 1);
-						visitedRows[currentVertex.RowIndex]--;
-						visitedCols[currentVertex.ColIndex]--;
-					}
+					//else
+					//{
+					//	visitedRows[currentVertex.RowIndex]++;
+					//	visitedCols[currentVertex.ColIndex]--;
+					//	// переход на предыдущий этап
+					//	path.RemoveAt(path.Count - 1);
+					//	currentVertex = path[path.Count - 1];
+					//	path.RemoveAt(path.Count - 1);
+					//	visitedRows[currentVertex.RowIndex]--;
+					//	visitedCols[currentVertex.ColIndex]--;
+					//}
 				}
 				else if (visitedCols[currentVertex.ColIndex] < 2)
 				{
 					validColVertexes = FindListOfValidVertexesInCol(currentVertex, visitedRows);
 					if (validColVertexes.Count > 0)
 					{
-						nextVertex = FindClosestVertexToSpecifiedInCol(currentVertex, validColVertexes);
-						currentVertex = nextVertex;
+						currentVertex = FindClosestVertexToSpecifiedInCol(currentVertex, validColVertexes);
 					}
-					else
-					{
-						visitedCols[currentVertex.ColIndex]++;
-						visitedRows[currentVertex.RowIndex]--;
-						// переход на предыдущий этап
-						path.RemoveAt(path.Count - 1);
-						currentVertex = path[path.Count - 1];
-						path.RemoveAt(path.Count - 1);
-						visitedRows[currentVertex.RowIndex]--;
-						visitedCols[currentVertex.ColIndex]--;
-					}
+					//else
+					//{
+					//	visitedCols[currentVertex.ColIndex]++;
+					//	visitedRows[currentVertex.RowIndex]--;
+					//	// переход на предыдущий этап
+					//	path.RemoveAt(path.Count - 1);
+					//	currentVertex = path[path.Count - 1];
+					//	path.RemoveAt(path.Count - 1);
+					//	visitedRows[currentVertex.RowIndex]--;
+					//	visitedCols[currentVertex.ColIndex]--;
+					//}
 				}
 			}
+
+			RestoreTableDeletedCells(list);
 			return path;
 		}
+
 
 		private List<Vertex> FindListOfValidVertexesInRow(Vertex currentVertex, int[] visitedCols)
 		{
@@ -381,12 +383,16 @@ namespace TransportProblemApp.Model
 			return result;
 		}
 
-		private void DeleteFromTableUnusefulCells(Vertex startCyclePoint)
+		private List<Vertex> DeleteFromTableUnusefulCellsAndReturnTheList(Vertex startCyclePoint)
 		{
-
+			List<Vertex> unusefuls = new List<Vertex>();
+			Table.TariffMatrix[startCyclePoint.RowIndex][startCyclePoint.ColIndex].Value = 1;
+			DeleteCells(0, 0, unusefuls);
+			Table.TariffMatrix[startCyclePoint.RowIndex][startCyclePoint.ColIndex].Value =  double.NaN;
+			return unusefuls;
 		}
 
-		private void DeleteCell(int rowIndex, int colIndex, List<Vertex> unusefuls)
+		private void DeleteCells(int rowIndex, int colIndex, List<Vertex> unusefuls)
 		{
 			if (colIndex >= Table.NeedsRow.Length)
 			{
@@ -396,8 +402,8 @@ namespace TransportProblemApp.Model
 			{
 				return;
 			}
-			DeleteCell(rowIndex, colIndex + 1, unusefuls);
-			DeleteCell(rowIndex + 1, colIndex, unusefuls);
+			DeleteCells(rowIndex, colIndex + 1, unusefuls);
+			DeleteCells(rowIndex + 1, colIndex, unusefuls);
 			if (!double.IsNaN(Table.TariffMatrix[rowIndex][colIndex].Value))
 			{
 				if (IsThisCellAloneInRow(rowIndex, colIndex) || IsThisCellAloneInColumn(rowIndex, colIndex))
@@ -432,6 +438,13 @@ namespace TransportProblemApp.Model
 			return count == 0;
 		}
 
+		private void RestoreTableDeletedCells(List<Vertex> unusefuls)
+		{
+			foreach (Vertex vertex in unusefuls)
+			{
+				Table.TariffMatrix[vertex.RowIndex][vertex.ColIndex].Value = vertex.Value;
+			}
+		}
 		public static TransportTable CreateTransportTable(double[][] tariffMatrix, double[] stocks, double[] needs)
 		{
 			CheckArguments(tariffMatrix, stocks, needs);
