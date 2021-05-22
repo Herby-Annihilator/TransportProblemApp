@@ -163,7 +163,7 @@ namespace TransportProblemApp.Model
 			List<int> visitedCols = new List<int>();						
 			int currentRow = -1;
 			int currentCol = -1;
-			Vertex fuckingCell;
+			Vertex badCell;
 			do
 			{
 				rowsQueue.Enqueue(0);
@@ -207,10 +207,10 @@ namespace TransportProblemApp.Model
 						}
 					}
 				}
-				fuckingCell = FindFuckingCell(providerPotencials, consumerPotencials);
-				if (fuckingCell != null)
+				badCell = FindBadCell(providerPotencials, consumerPotencials);
+				if (badCell != null)
 				{
-					List<Vertex> path = FindPath(fuckingCell.RowIndex, fuckingCell.ColIndex);
+					List<Vertex> path = FindPath(badCell.RowIndex, badCell.ColIndex);
 					Vertex vertex = FindVertexWithMinValueInPath(path);
 					int sign;
 					Table.TariffMatrix[path[0].RowIndex][path[0].ColIndex].Value = 0; // добро пожаловать в базис
@@ -228,21 +228,21 @@ namespace TransportProblemApp.Model
 						}
 					}
 				}
-			} while (fuckingCell != null); 			
+			} while (badCell != null); 			
 		}
 
-		private List<Vertex> FindPath(int fuckingRow, int fuckingCol)
+		private List<Vertex> FindPath(int badRow, int badCol)
 		{
-			var list = DeleteFromTableUnusefulCellsAndReturnTheList(new Vertex(fuckingRow, fuckingCol));
+			var list = DeleteFromTableUnusefulCellsAndReturnTheList(new Vertex(badRow, badCol));
 
 			List<Vertex> path = new List<Vertex>();
 			int[] visitedRows = new int[Table.StocksColumn.Length];
 			int[] visitedCols = new int[Table.NeedsRow.Length];
-			Vertex currentVertex = new Vertex(fuckingRow, fuckingCol);
+			Vertex currentVertex = new Vertex(badRow, badCol);
 			List<Vertex> validRowVertexes;
 			List<Vertex> validColVertexes;
 
-			while(visitedCols[fuckingCol] < 2 || visitedRows[fuckingRow] < 2)
+			while(visitedCols[badCol] < 2 || visitedRows[badRow] < 2)
 			{
 				path.Add(currentVertex);
 				visitedCols[currentVertex.ColIndex]++;
@@ -253,18 +253,7 @@ namespace TransportProblemApp.Model
 					if (validRowVertexes.Count > 0)
 					{
 						currentVertex = FindClosestVertexToSpecifiedInRow(currentVertex, validRowVertexes);
-					}	
-					//else
-					//{
-					//	visitedRows[currentVertex.RowIndex]++;
-					//	visitedCols[currentVertex.ColIndex]--;
-					//	// переход на предыдущий этап
-					//	path.RemoveAt(path.Count - 1);
-					//	currentVertex = path[path.Count - 1];
-					//	path.RemoveAt(path.Count - 1);
-					//	visitedRows[currentVertex.RowIndex]--;
-					//	visitedCols[currentVertex.ColIndex]--;
-					//}
+					}						
 				}
 				else if (visitedCols[currentVertex.ColIndex] < 2)
 				{
@@ -273,20 +262,8 @@ namespace TransportProblemApp.Model
 					{
 						currentVertex = FindClosestVertexToSpecifiedInCol(currentVertex, validColVertexes);
 					}
-					//else
-					//{
-					//	visitedCols[currentVertex.ColIndex]++;
-					//	visitedRows[currentVertex.RowIndex]--;
-					//	// переход на предыдущий этап
-					//	path.RemoveAt(path.Count - 1);
-					//	currentVertex = path[path.Count - 1];
-					//	path.RemoveAt(path.Count - 1);
-					//	visitedRows[currentVertex.RowIndex]--;
-					//	visitedCols[currentVertex.ColIndex]--;
-					//}
 				}
 			}
-
 			RestoreTableDeletedCells(list);
 			return path;
 		}
@@ -424,7 +401,7 @@ namespace TransportProblemApp.Model
 			}
 		}
 
-		private Vertex FindFuckingCell(double[] providersPotencials, double[] consumersPotencials)
+		private Vertex FindBadCell(double[] providersPotencials, double[] consumersPotencials)
 		{
 			Vertex minCell = null;
 			double[][] matrix = new double[Table.StocksColumn.Length][];
