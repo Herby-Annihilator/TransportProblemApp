@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using TransportProblemApp.Model.Extensions;
 
 namespace TransportProblemApp.Model
 {
@@ -162,17 +163,18 @@ namespace TransportProblemApp.Model
 			Queue<int> rowsQueue = new Queue<int>();
 			Queue<int> colsQueue = new Queue<int>();
 			List<int> visitedRows = new List<int>();
-			List<int> visitedCols = new List<int>();
-			bool rowsQueueIsCurrent = true;
-			rowsQueue.Enqueue(0);
+			List<int> visitedCols = new List<int>();						
 			int currentRow = -1;
 			int currentCol = -1;
-			int fuckingRow = -1;
-			int fuckingCol = -1;
-			bool fuckingCellWasFound = true;
-			while (fuckingCellWasFound)
+			Vertex fuckingCell;
+			do
 			{
-				fuckingCellWasFound = false;
+				rowsQueue.Enqueue(0);
+				bool rowsQueueIsCurrent = true;
+				visitedRows.Clear();
+				visitedCols.Clear();
+				consumerPotencials.FillBy(0);
+				providerPotencials.FillBy(0);
 				while (rowsQueue.Count > 0 || colsQueue.Count > 0) // расставляем потенциалы
 				{
 					if (rowsQueueIsCurrent)
@@ -208,56 +210,28 @@ namespace TransportProblemApp.Model
 						}
 					}
 				}
-
-				for (int i = 0; i < Table.StocksColumn.Length; i++)  // ищем ячейку, в которой не выполнено условие оптимальности плана
+				fuckingCell = FindFuckingCell(providerPotencials, consumerPotencials);
+				if (fuckingCell != null)
 				{
-					for (int j = 0; j < Table.NeedsRow.Length; j++)
-					{
-						if (double.IsNaN(Table.TariffMatrix[i][j].Value)) // в ячейке прочерк
-						{
-							if (providerPotencials[i] + consumerPotencials[j] > Table.TariffMatrix[i][j].Tariff)
-							{
-								fuckingRow = i;
-								fuckingCol = j;
-								fuckingCellWasFound = true;
-								break;
-							}
-						}
-					}
-					if (fuckingCellWasFound)
-						break;
-				}
-
-				if (fuckingCellWasFound)
-				{
-					List<Vertex> path = FindPath(fuckingRow, fuckingCol);
-					double min = FindMinValueInPath(path);
+					List<Vertex> path = FindPath(fuckingCell.RowIndex, fuckingCell.ColIndex);
+					Vertex vertex = FindVertexWithMinValueInPath(path);
 					int sign;
+					Table.TariffMatrix[path[0].RowIndex][path[0].ColIndex].Value = 0; // добро пожаловать в базис
+					Table.TariffMatrix[vertex.RowIndex][vertex.ColIndex].Value = double.NaN; // вон из базиса
 					for (int i = 0; i < path.Count; i++)
 					{
-						if (i % 2 == 0)
-							sign = 1;
-						else
-							sign = -1;
-						if (double.IsNaN(Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value))
+						if (path[i].ColIndex != vertex.ColIndex || path[i].RowIndex != vertex.RowIndex)
 						{
-							Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value = 0;
-						}
-						Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value += sign * min;
-						if (Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value <= double.Epsilon && Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value >= 0) // Если получился ноль
-						{
-							if (i ==  path.Count - 1) // если это последний элемент пути, то нужно поставить прочерк, т.к. это выводит переменную из базиса
-							{
-								Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value = double.NaN;
-							}
+							if (i % 2 == 0)
+								sign = 1;
 							else
-							{
-								Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value = 0;
-							}
+								sign = -1;
+
+							Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value += sign * vertex.Value;
 						}
 					}
 				}
-			}			
+			} while (fuckingCell != null); 			
 		}
 
 		private List<Vertex> FindPath(int fuckingRow, int fuckingCol)
@@ -387,7 +361,13 @@ namespace TransportProblemApp.Model
 		{
 			List<Vertex> unusefuls = new List<Vertex>();
 			Table.TariffMatrix[startCyclePoint.RowIndex][startCyclePoint.ColIndex].Value = 1;
-			DeleteCells(0, 0, unusefuls);
+			List<Vertex> currentUnusefuls = new List<Vertex>();
+			do
+			{
+				currentUnusefuls.Clear();
+				DeleteCells(0, 0, currentUnusefuls);
+				unusefuls.AddRange(currentUnusefuls);
+			} while (currentUnusefuls.Count > 0);
 			Table.TariffMatrix[startCyclePoint.RowIndex][startCyclePoint.ColIndex].Value =  double.NaN;
 			return unusefuls;
 		}
@@ -445,6 +425,33 @@ namespace TransportProblemApp.Model
 				Table.TariffMatrix[vertex.RowIndex][vertex.ColIndex].Value = vertex.Value;
 			}
 		}
+
+		private Vertex FindFuckingCell(double[] providersPotencials, double[] consumersPotencials)
+		{
+			Vertex minCell = null;
+			double[][] matrix = new double[Table.StocksColumn.Length][];
+			for (int i = 0; i < Table.StocksColumn.Length; i++)
+			{
+				matrix[i] = new double[Table.NeedsRow.Length];
+				for (int j = 0; j < Table.NeedsRow.Length; j++)
+				{
+					matrix[i][j] = providersPotencials[i] + consumersPotencials[j] - Table.TariffMatrix[i][j].Tariff;
+				}
+			}
+			double min = 0;
+			for (int i = 0; i < matrix.GetLength(0); i++)
+			{
+				for (int j = 0; j < matrix[i].Length; j++)
+				{
+					if (matrix[i][j] > min)
+					{
+						min = matrix[i][j];
+						minCell = new Vertex(i, j, min);
+					}
+				}
+			}
+			return minCell;
+		}
 		public static TransportTable CreateTransportTable(double[][] tariffMatrix, double[] stocks, double[] needs)
 		{
 			CheckArguments(tariffMatrix, stocks, needs);
@@ -495,17 +502,21 @@ namespace TransportProblemApp.Model
 			return table;
 		}
 
-		private double FindMinValueInPath(List<Vertex> path)
+		private Vertex FindVertexWithMinValueInPath(List<Vertex> path)
 		{
+			Vertex vertex = path[1];
 			double min = Table.TariffMatrix[path[1].RowIndex][path[1].ColIndex].Value; // не 0
+			vertex.Value = min;
 			for (int i = 3; i < path.Count; i++)
 			{
 				if (Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value < min)
 				{
+					vertex = path[i];
 					min = Table.TariffMatrix[path[i].RowIndex][path[i].ColIndex].Value;
+					vertex.Value = min;
 				}
 			}
-			return min;
+			return vertex;
 		}
 		
 		private static void CheckArguments(double[][] tariffMatrix, double[] stocks, double[] needs)

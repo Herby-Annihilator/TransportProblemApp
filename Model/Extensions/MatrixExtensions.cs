@@ -22,5 +22,13 @@ namespace TransportProblemApp.Model.Extensions
 			}
 			return result;
 		}
+
+		public static void FillBy<T>(this T[] arr, T obj)
+		{
+			for (int i = 0; i < arr.Length; i++)
+			{
+				arr[i] = obj;
+			}
+		}
 	}
 }
