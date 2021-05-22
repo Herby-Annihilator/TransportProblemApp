@@ -147,10 +147,7 @@ namespace TransportProblemApp.Model
 				result[i] = new double[Table.TariffMatrix[i].Length];
 				for (int j = 0; j < result[i].Length; j++)
 				{
-					if (double.IsNaN(Table.TariffMatrix[i][j].Value))
-						result[i][j] = 0;
-					else
-						result[i][j] = Table.TariffMatrix[i][j].Value;
+					result[i][j] = Table.TariffMatrix[i][j].Value;
 				}
 			}
 			return result;
@@ -351,7 +348,8 @@ namespace TransportProblemApp.Model
 			{
 				for (int j = 0; j < plan[i].Length; j++)
 				{
-					result += plan[i][j] * Table.TariffMatrix[i][j].Tariff;
+					if (!double.IsNaN(plan[i][j]))
+						result += plan[i][j] * Table.TariffMatrix[i][j].Tariff;
 				}
 			}
 			return result;

@@ -84,6 +84,10 @@ namespace TransportProblemApp
 			{
 				labelOptimalPrice.Text = "";
 				labelBasePrice.Text = "";
+				referenceSolution?.Rows.Clear();
+				referenceSolution?.Columns.Clear();
+				optimalSolution?.Rows.Clear();
+				optimalSolution?.Columns.Clear();
 				double[][] tariffMatrixNumbers = new double[_providersCount][];
 				for (int i = 0; i < _providersCount; i++)
 				{
